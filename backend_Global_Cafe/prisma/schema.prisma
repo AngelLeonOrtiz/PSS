@@ -1,0 +1,430 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// 1. MÓDULO ADMINISTRATIVO (DBA)
+// ==========================================
+
+model Licencia {
+  id_lic                Int       @id @default(autoincrement())
+  id_sucursal           Int
+  inicio                DateTime  @db.Date
+  final                 DateTime  @db.Date
+  llave                 String    @unique @db.VarChar(120)
+  tipo_licencia         String?   @db.VarChar(30)
+  cantidad_usuarios     Int?      @db.SmallInt
+  cantidad_areas        Int?      @db.SmallInt
+  estado                Boolean   @default(true)
+  motivo_desactivacion  String?   @db.VarChar(250)
+  fecha_creacion        DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion      Int?
+  fecha_actualizacion   DateTime? @db.Timestamptz
+  usuario_actualizacion Int?
+
+  sucursal Sucursal @relation(fields: [id_sucursal], references: [id_sucursal])
+
+  @@map("licencia")
+  @@index([id_sucursal, inicio, final])
+  @@index([estado])
+}
+
+model EmpresaConfiguracionVisual {
+  id_configuracion        Int       @id @default(autoincrement())
+  id_empresa              Int       @unique
+  modulo                  String?   @db.VarChar(50)
+  tipo_documento          String?   @db.VarChar(50)
+  es_configuracion_global Boolean   @default(false)
+  color_primario          String?   @db.VarChar(9)
+  color_secundario        String?   @db.VarChar(9)
+  color_terciario         String?   @db.VarChar(9)
+  color_fondo             String?   @db.VarChar(9)
+  color_texto             String?   @db.VarChar(9)
+  fuente_principal        String?   @db.VarChar(100)
+  fuente_secundaria       String?   @db.VarChar(100)
+  tamano_titulo           Int?      @db.SmallInt
+  tamano_subtitulo        Int?      @db.SmallInt
+  tamano_texto            Int?      @db.SmallInt
+  tamano_pie_pagina       Int?      @db.SmallInt
+  mostrar_logo            Boolean?  @default(true)
+  mostrar_pie_pagina      Boolean?  @default(true)
+  texto_pie_pagina        String?   @db.VarChar(250)
+  margen_superior         Int?      @db.SmallInt
+  margen_inferior         Int?      @db.SmallInt
+  margen_izquierdo        Int?      @db.SmallInt
+  margen_derecho          Int?      @db.SmallInt
+  activo                  Boolean   @default(true)
+  fecha_creacion          DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion        Int?
+  fecha_actualizacion     DateTime? @db.Timestamptz
+  usuario_actualizacion   Int?
+
+  empresa Empresa @relation(fields: [id_empresa], references: [id_empresa])
+
+  @@map("empresa_configuracion_visual")
+  @@unique([id_empresa, modulo, tipo_documento])
+}
+
+model Empresa {
+  id_empresa                Int       @id @default(autoincrement())
+  nombre                    String    @db.VarChar(150)
+  razon_social              String?   @db.VarChar(200)
+  rtn                       String?   @unique @db.VarChar(20)
+  registro_sanitario        String?   @db.VarChar(50)
+  pais                      String?   @db.VarChar(80)
+  ciudad                    String?   @db.VarChar(100)
+  direccion                 String?   @db.VarChar(250)
+  telefono                  String?   @db.VarChar(30)
+  telefono_secundario       String?   @db.VarChar(30)
+  correo                    String?   @db.VarChar(150)
+  sitio_web                 String?   @db.VarChar(150)
+  moneda_base               String?   @db.VarChar(10)
+  tipo_cambio_base          Decimal?  @db.Decimal(18, 6)
+  cuenta_contable_principal String?   @db.VarChar(50)
+  logo                      Bytes?
+  eslogan                   String?   @db.VarChar(150)
+  prefijo_documentos        String?   @db.VarChar(10)
+  correlativo_global        Int?
+  permite_multi_sucursal    Boolean?  @default(true)
+  activo                    Boolean   @default(true)
+  fecha_creacion            DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion          Int?
+  fecha_actualizacion       DateTime? @db.Timestamptz
+  usuario_actualizacion     Int?
+  fecha_eliminacion         DateTime? @db.Timestamptz
+  observaciones             String?   @db.VarChar(250)
+
+  sucursales            Sucursal[]
+  configuracion_visual  EmpresaConfiguracionVisual?
+
+  @@map("empresa")
+}
+
+model Sucursal {
+  id_sucursal             Int       @id @default(autoincrement())
+  id_empresa              Int
+  nombre                  String    @db.VarChar(120)
+  codigo                  String?   @db.VarChar(20)
+  tipo_sucursal           String?   @db.VarChar(30)
+  es_sucursal_principal   Boolean   @default(false)
+  direccion               String?   @db.VarChar(200)
+  ciudad                  String?   @db.VarChar(100)
+  departamento            String?   @db.VarChar(100)
+  pais                    String?   @db.VarChar(80)
+  telefono                String?   @db.VarChar(30)
+  telefono_secundario     String?   @db.VarChar(30)
+  correo                  String?   @db.VarChar(120)
+  latitud                 Decimal?  @db.Decimal(10, 7)
+  longitud                Decimal?  @db.Decimal(10, 7)
+  horario_apertura        DateTime? @db.Time
+  horario_cierre          DateTime? @db.Time
+  zona_horaria            String?   @db.VarChar(60)
+  responsable_nombre      String?   @db.VarChar(120)
+  responsable_telefono    String?   @db.VarChar(30)
+  eslogan                 String?   @db.VarChar(120)
+  imagen                  Bytes?
+  formato                 String?   @db.VarChar(50)
+  estado                  Boolean   @default(true)
+  fecha_creacion          DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion        Int?
+  fecha_actualizacion     DateTime? @db.Timestamptz
+  usuario_actualizacion   Int?
+  fecha_eliminacion       DateTime? @db.Timestamptz
+  observaciones           String?   @db.VarChar(250)
+
+  empresa     Empresa     @relation(fields: [id_empresa], references: [id_empresa])
+  licencias   Licencia[]
+  areas       Area[]
+  
+  recepciones Recepcion[] 
+
+  @@map("sucursal")
+  @@unique([id_empresa, codigo])
+  @@index([id_empresa, estado])
+  @@index([tipo_sucursal])
+}
+
+model Area {
+  id_area                Int       @id @default(autoincrement())
+  id_sucursal            Int
+  nombre                 String    @db.VarChar(100)
+  codigo                 String    @db.VarChar(30)
+  tipo_area              String?   @db.VarChar(30)
+  modulo_principal       String?   @db.VarChar(50)
+  id_area_padre          Int?
+  es_area_operativa      Boolean   @default(true)
+  orden_visual           Int?      @db.SmallInt
+  observaciones          String?   @db.VarChar(250)
+  id_usuario_responsable Int?
+  responsable_nombre     String?   @db.VarChar(120)
+  responsable_telefono   String?   @db.VarChar(30)
+  responsable_correo     String?   @db.VarChar(120)
+  estado                 Boolean   @default(true)
+  fecha_creacion         DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion       Int?
+  fecha_actualizacion    DateTime? @db.Timestamptz
+  usuario_actualizacion  Int?
+  fecha_eliminacion      DateTime? @db.Timestamptz
+
+  sucursal            Sucursal      @relation(fields: [id_sucursal], references: [id_sucursal])
+  usuario_responsable Usuario?      @relation("AreaResponsable", fields: [id_usuario_responsable], references: [id])
+  empleados           Empleado[]
+  usuario_areas       UsuarioArea[]
+
+  @@map("area")
+  @@unique([id_sucursal, codigo])
+  @@index([id_sucursal, estado])
+  @@index([modulo_principal])
+}
+
+model Empleado {
+  id_empleado                Int       @id @default(autoincrement())
+  id_area                    Int
+  id_usuario                 Int?      @unique
+  identidad                  String?   @db.VarChar(25)
+  nombre_completo            String    @db.VarChar(160)
+  fecha_nacimiento           DateTime? @db.Date
+  correo_personal            String?   @db.VarChar(150)
+  correo_corporativo         String?   @db.VarChar(150)
+  telefono                   String?   @db.VarChar(30)
+  telefono_emergencia        String?   @db.VarChar(30)
+  contacto_emergencia_nombre String?   @db.VarChar(120)
+  direccion                  String?   @db.VarChar(250)
+  codigo_empleado            String?   @unique @db.VarChar(30)
+  puesto                     String?   @db.VarChar(120)
+  tipo_contrato              String?   @db.VarChar(30)
+  fecha_ingreso              DateTime? @db.Date
+  fecha_baja                 DateTime? @db.Date
+  estado_laboral             String    @default("ACTIVO") @db.VarChar(20)
+  observaciones              String?   @db.VarChar(250)
+  fecha_creacion             DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion           Int?
+  fecha_actualizacion        DateTime? @db.Timestamptz
+  usuario_actualizacion      Int?
+  fecha_eliminacion          DateTime? @db.Timestamptz
+
+  area    Area     @relation(fields: [id_area], references: [id_area])
+  usuario Usuario? @relation("EmpleadoUsuario", fields: [id_usuario], references: [id])
+
+  @@map("empleado")
+  @@index([id_area, estado_laboral])
+}
+
+// ==========================================
+// 2. SEGURIDAD Y ACCESO (RBAC)
+// ==========================================
+
+model Usuario {
+  id                    Int       @id @default(autoincrement())
+  usuario               String    @unique @db.VarChar(50) 
+  clave_hash            String    @db.Text              
+  ultimo_cambio_clave   DateTime? @db.Timestamptz
+  requiere_cambio_clave Boolean   @default(false)
+  nombre_visible        String    @db.VarChar(150)      
+  correo                String?   @db.VarChar(150)
+  telefono              String?   @db.VarChar(30)
+  intentos_fallidos     Int       @default(0) @db.SmallInt
+  bloqueado_hasta       DateTime? @db.Timestamptz
+  es_administrador      Boolean   @default(false)
+  ultimo_login          DateTime? @db.Timestamptz
+  ultimo_ip             String?   @db.VarChar(45)
+  activo                Boolean   @default(true)        
+  fecha_creacion        DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion      Int?
+  fecha_actualizacion   DateTime? @db.Timestamptz
+  usuario_actualizacion Int?
+  fecha_eliminacion     DateTime? @db.Timestamptz
+  observaciones         String?   @db.VarChar(250)
+
+  empleado_asociado Empleado?     @relation("EmpleadoUsuario")
+  areas_responsable Area[]        @relation("AreaResponsable")
+  usuario_areas     UsuarioArea[]
+  roles             UsuarioRol[]
+  logs_sistemas     LogSistema[]
+
+  recepciones       Recepcion[]
+
+  @@map("usuario") // Nombre en DB: "usuario"
+  @@index([correo])
+  @@index([activo])
+}
+
+model UsuarioArea {
+  id_usuario_area     Int       @id @default(autoincrement())
+  usuario_id          Int
+  id_area             Int
+  es_area_principal   Boolean   @default(false)
+  fecha_asignacion    DateTime  @default(now()) @db.Timestamptz
+  usuario_asignacion  Int?
+  fecha_desasignacion DateTime? @db.Timestamptz
+  activo              Boolean   @default(true)
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  area    Area    @relation(fields: [id_area], references: [id_area])
+
+  @@map("usuario_area")
+  @@unique([usuario_id, id_area])
+  @@index([usuario_id, es_area_principal])
+}
+
+model Rol {
+  id_rol                Int       @id @default(autoincrement())
+  codigo                String    @unique @db.VarChar(50) 
+  nombre                String    @db.VarChar(120)
+  descripcion           String?   @db.VarChar(250)
+  es_rol_sistema        Boolean   @default(false)
+  prioridad             Int       @default(100) @db.SmallInt
+  estado                Boolean   @default(true)
+  fecha_creacion        DateTime  @default(now()) @db.Timestamptz
+  usuario_creacion      Int?
+  fecha_actualizacion   DateTime? @db.Timestamptz
+  usuario_actualizacion Int?
+  fecha_eliminacion     DateTime? @db.Timestamptz
+  observaciones         String?   @db.VarChar(250)
+
+  permisos RolPermiso[]
+  usuarios UsuarioRol[]
+
+  @@map("rol")
+  @@index([estado])
+  @@index([es_rol_sistema])
+}
+
+model Permiso {
+  id_permiso     Int      @id @default(autoincrement())
+  codigo         String   @unique @db.VarChar(100)
+  modulo         String   @db.VarChar(50)
+  accion         String   @db.VarChar(50)
+  descripcion    String?  @db.VarChar(250)
+  es_critico     Boolean  @default(false)
+  estado         Boolean  @default(true)
+  fecha_creacion DateTime @default(now()) @db.Timestamptz
+
+  roles RolPermiso[]
+
+  @@map("permiso")
+  @@index([modulo])
+}
+
+model RolPermiso {
+  id_rol_permiso     Int      @id @default(autoincrement())
+  id_rol             Int
+  id_permiso         Int
+  fecha_asignacion   DateTime @default(now()) @db.Timestamptz
+  usuario_asignacion Int?
+
+  rol     Rol     @relation(fields: [id_rol], references: [id_rol])
+  permiso Permiso @relation(fields: [id_permiso], references: [id_permiso])
+
+  @@map("rol_permiso")
+  @@unique([id_rol, id_permiso])
+}
+
+model UsuarioRol {
+  id_usuario_rol     Int      @id @default(autoincrement())
+  usuario_id         Int
+  id_rol             Int
+  fecha_asignacion   DateTime @default(now()) @db.Timestamptz
+  usuario_asignacion Int?
+  activo             Boolean  @default(true)
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  rol     Rol     @relation(fields: [id_rol], references: [id_rol])
+
+  @@map("usuario_rol")
+  @@unique([usuario_id, id_rol])
+}
+
+model LogSistema {
+  id_log          Int      @id @default(autoincrement())
+  usuario_id      Int?
+  usuario_login   String?  @db.VarChar(60)
+  nombre_usuario  String?  @db.VarChar(150)
+  id_empleado     Int?
+  nombre_empleado String?  @db.VarChar(160)
+  id_empresa      Int?
+  id_sucursal     Int?
+  id_area         Int?
+  id_accion       Int      @db.SmallInt
+  accion_nombre   String   @db.VarChar(50)
+  id_tabla        Int?     @db.SmallInt
+  tabla_nombre    String?  @db.VarChar(80)
+  modulo          String   @db.VarChar(50)
+  entidad         String?  @db.VarChar(80)
+  id_entidad      String?  @db.VarChar(80)
+  campo_clave     String?  @db.VarChar(80)
+  datos_antes     Json?
+  datos_despues   Json?
+  origen          String   @db.VarChar(20)
+  ruta            String?  @db.VarChar(200)
+  metodo_http     String?  @db.VarChar(10)
+  pantalla        String?  @db.VarChar(120)
+  correlacion_id  String?  @db.VarChar(50)
+  ip              String?  @db.VarChar(45)
+  user_agent      String?  @db.VarChar(250)
+  exito           Boolean  @default(true)
+  error_mensaje   String?  @db.VarChar(250)
+  error_detalle   String?  @db.Text
+  fecha_evento    DateTime @default(now()) @db.Timestamptz
+
+  usuario Usuario? @relation(fields: [usuario_id], references: [id])
+
+  @@map("log_sistema")
+  @@index([fecha_evento])
+  @@index([usuario_login])
+  @@index([id_accion, id_tabla])
+  @@index([tabla_nombre, id_entidad])
+  @@index([correlacion_id])
+  @@index([id_empresa, id_sucursal])
+}
+
+// ==========================================
+// 3. TU MÓDULO OPERATIVO (Simplificado)
+// ==========================================
+
+model Recepcion {
+  id              Int      @id @default(autoincrement())
+  id_sucursal     Int
+  numero_entrada  String   @unique
+  fecha_hora      DateTime @default(now())
+  
+  tipo_vehiculo   String
+  placa_vehiculo  String
+  placa_furgon    String?
+  transportista   String
+  conductor       String
+  procedencia     String
+  marchamos       String?
+  
+  estado          Boolean  @default(true)
+
+  // --- RELACIONES ---
+  detalles        RecepcionDetalle[]
+  
+  sucursal        Sucursal @relation(fields: [id_sucursal], references: [id_sucursal])
+
+  usuario_id      Int
+  usuario         Usuario  @relation(fields: [usuario_id], references: [id])
+
+  @@map("recepcion") // Nombre en DB: "recepcion"
+}
+
+model RecepcionDetalle {
+  id                  Int     @id @default(autoincrement())
+  numero_remision     String
+  proveedor           String
+  cantidad_sacos      Int
+  quintales_pergamino Decimal @db.Decimal(10, 2)
+  estado              Boolean @default(true)
+
+  // Relación con el Padre
+  recepcion_id        Int
+  recepcion           Recepcion @relation(fields: [recepcion_id], references: [id], onDelete: Cascade)
+
+  @@map("recepciondetalle") // Nombre en DB: "recepciondetalle"
+}
