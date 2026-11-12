@@ -6,6 +6,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmp
 import { Button, Input, Modal, ModalFooter, Select } from "../../components/ui";
 import Badge from "../../components/ui/Badge";
 import { moduleColors } from "../../config/colors.config";
+import { useAuth } from "../../auth/useAuth";
 import toast from "react-hot-toast";
 
 // APIs
@@ -61,6 +62,9 @@ const initialState: RemisionFormData = {
 };
 
 export default function RemisionPage() {
+  const { hasPermission } = useAuth();
+  const hasRowActions = hasPermission("EDITAR_RECEPCION") || hasPermission("IMPRIMIR_RECEPCION") || hasPermission("ANULAR_RECEPCION");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -305,7 +309,14 @@ export default function RemisionPage() {
 
   return (
     <div>
-      <PageHeader title="Ingreso de Remisión" subtitle="Registro de vehículos y carga en portería" icon={ClipboardList} iconBg={colors.bg} iconColor={colors.icon} actions={[{ label: "Nueva Remisión", onClick: handleOpenModal, icon: Plus }]} />
+      <PageHeader 
+        title="Ingreso de Remisión" 
+        subtitle="Registro de vehículos y carga en portería" 
+        icon={ClipboardList} 
+        iconBg={colors.bg} 
+        iconColor={colors.icon} 
+        actions={hasPermission("CREAR_RECEPCION") ? [{ label: "Nueva Remisión", onClick: handleOpenModal, icon: Plus }] : []} 
+      />
 
       <Card className="mb-6">
         <CardContent className="p-4">
@@ -321,8 +332,8 @@ export default function RemisionPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12"></TableHead> {/* Columna para el ícono de expandir */}
-              <TableHead align="center" className="w-20">Acciones</TableHead>
+              <TableHead className="w-12" />
+              {hasRowActions && <TableHead align="center" className="w-20">Acciones</TableHead>}
               <TableHead>No. Entrada</TableHead>
               <TableHead>Fecha / Hora</TableHead>
               <TableHead>Transporte</TableHead>
@@ -335,7 +346,7 @@ export default function RemisionPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={9} align="center" className="py-8 text-neutral-500">
+                <TableCell colSpan={hasRowActions ? 9 : 8} align="center" className="py-8 text-neutral-500">
                   <Loader2 className="w-6 h-6 animate-spin inline-block mr-2" /> Cargando remisiones...
                 </TableCell>
               </TableRow>
@@ -362,50 +373,59 @@ export default function RemisionPage() {
                 
                 return (
                   <React.Fragment key={r.id_recepcion}>
-                    {/* FILA PRINCIPAL (El Viaje) */}
                     <TableRow className={isExpanded ? "bg-amber-50/30" : ""}>
                       <TableCell>
                         <button onClick={() => toggleRow(r.id_recepcion)} className="p-1 rounded-md hover:bg-neutral-200 text-neutral-500 transition-colors">
                           {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                         </button>
                       </TableCell>
-                      <TableCell align="center">
-                        <div className="relative inline-block text-left">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === r.id_recepcion ? null : r.id_recepcion); }}
-                            className="p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
-                          >
-                            <MoreVertical className="w-5 h-5 text-neutral-600" />
-                          </button>
-                          {actionMenuOpen === r.id_recepcion && (
-                            <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); if(canModify) handleEdit(r); }} 
-                                disabled={!canModify}
-                                title={!canModify ? "No se puede editar porque ya hay cargas en proceso" : ""}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${canModify ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-400 cursor-not-allowed"}`}
-                              >
-                                <Edit className="w-4 h-4"/> Editar Viaje
-                              </button>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handlePrintClick(r); }} 
-                                className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2"
-                              >
-                                <Printer className="w-4 h-4 text-neutral-500"/> Imprimir Boleta
-                              </button>
-                              <div className="border-t border-neutral-100 my-1"></div>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); if(canModify) handleDeleteClick(r); }} 
-                                disabled={!canModify}
-                                title={!canModify ? "No se puede anular porque ya hay cargas en proceso" : ""}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${canModify ? "text-red-600 hover:bg-red-50" : "text-neutral-400 cursor-not-allowed"}`}
-                              >
-                                <Trash2 className="w-4 h-4"/> Anular Ingreso
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
+                      {hasRowActions && (
+                        <TableCell align="center">
+                          <div className="relative inline-block text-left">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === r.id_recepcion ? null : r.id_recepcion); }}
+                              className="p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                            >
+                              <MoreVertical className="w-5 h-5 text-neutral-600" />
+                            </button>
+                            {actionMenuOpen === r.id_recepcion && (
+                              <div className="absolute left-0 top-full mt-1 w-40 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+                                {hasPermission("EDITAR_RECEPCION") && (
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); if(canModify) handleEdit(r); }} 
+                                    disabled={!canModify}
+                                    title={!canModify ? "No se puede editar porque ya hay cargas en proceso" : ""}
+                                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${canModify ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-400 cursor-not-allowed"}`}
+                                  >
+                                    <Edit className="w-4 h-4"/> Editar Viaje
+                                  </button>
+                                )}
+                                {hasPermission("IMPRIMIR_RECEPCION") && (
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handlePrintClick(r); }} 
+                                    className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2"
+                                  >
+                                    <Printer className="w-4 h-4 text-neutral-500"/> Imprimir Boleta
+                                  </button>
+                                )}
+                                {(hasPermission("EDITAR_RECEPCION") || hasPermission("IMPRIMIR_RECEPCION")) && hasPermission("ANULAR_RECEPCION") && (
+                                  <div className="border-t border-neutral-100 my-1"></div>
+                                )}
+                                {hasPermission("ANULAR_RECEPCION") && (
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); if(canModify) handleDeleteClick(r); }} 
+                                    disabled={!canModify}
+                                    title={!canModify ? "No se puede anular porque ya hay cargas en proceso" : ""}
+                                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${canModify ? "text-red-600 hover:bg-red-50" : "text-neutral-400 cursor-not-allowed"}`}
+                                  >
+                                    <Trash2 className="w-4 h-4"/> Anular Ingreso
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell className="font-medium text-coffee-700">{r.numero_entrada}</TableCell>
                       <TableCell>
                         {new Date(r.fecha_entrada).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
@@ -420,10 +440,9 @@ export default function RemisionPage() {
                       <TableCell align="right" className="font-semibold">{totalQq.toFixed(2)} QQ</TableCell>
                     </TableRow>
 
-                    {/* SUB-TABLA EXPANDIDA (Las Cargas) */}
                     {isExpanded && (
                       <TableRow className="bg-neutral-50/50 hover:bg-neutral-50/50">
-                        <TableCell colSpan={9} className="p-0 border-b border-neutral-200">
+                        <TableCell colSpan={hasRowActions ? 9 : 8} className="p-0 border-b border-neutral-200">
                           <div className="pl-14 pr-6 py-4">
                             <div className="border border-neutral-200 rounded-lg overflow-hidden bg-white shadow-sm">
                               <Table>

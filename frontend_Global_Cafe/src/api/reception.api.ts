@@ -85,6 +85,11 @@ export async function getReceptionsApi(): Promise<Recepcion[]> {
   return data;
 }
 
+export async function getResumenHoyApi(): Promise<any> {
+  const { data } = await http.get<any>("/reception/resumen-hoy");
+  return data;
+}
+
 export async function updateReceptionApi(id: number, payload: Partial<CreateReceptionRequest>): Promise<Recepcion> {
   const { data } = await http.patch<Recepcion>(`/reception/${id}`, payload);
   return data;
@@ -100,4 +105,28 @@ export async function registrarImpresionApi(id: number): Promise<void> {
 
 export async function cambiarEstadoDetalleApi(id_detalle: number, estado: string): Promise<void> {
   await http.patch(`/reception/detalle/${id_detalle}/estado`, { estado });
+}
+
+// ==========================================
+// APIs PARA BÁSCULA
+// ==========================================
+export async function getPendientesBasculaApi(): Promise<any[]> {
+  const { data } = await http.get<any[]>("/reception/bascula/pendientes");
+  return data;
+}
+
+export async function registrarPesadaEntradaApi(id: number, peso: number, id_bodega: number): Promise<void> {
+  await http.put(`/reception/bascula/entrada/${id}`, { peso, id_bodega });
+}
+
+export async function registrarSalidaCabezalApi(id: number, id_placa_saliente: number, peso_saliente: number): Promise<void> {
+  await http.put(`/reception/bascula/cambio-cabezal/salida/${id}`, { id_placa_saliente, peso_saliente });
+}
+
+export async function registrarEntradaCabezalApi(id: number, id_placa_entrante: number, peso_entrante: number): Promise<void> {
+  await http.put(`/reception/bascula/cambio-cabezal/entrada/${id}`, { id_placa_entrante, peso_entrante });
+}
+
+export async function registrarPesadaSalidaApi(id: number, peso: number): Promise<void> {
+  await http.put(`/reception/bascula/salida/${id}`, { peso });
 }

@@ -27,7 +27,7 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
     nombre: data.user.nombre,
     email: "", // El backend aún no envía email
     roles: data.user.roles, // El backend ya envía un array
-    permisos: [], // Por defecto vacío
+    permisos: data.user.permisos || [], // Leemos los permisos que manda el backend
     id_sucursal: data.user.id_sucursal,
   };
 }

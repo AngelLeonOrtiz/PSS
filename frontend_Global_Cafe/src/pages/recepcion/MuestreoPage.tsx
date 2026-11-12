@@ -6,6 +6,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmp
 import { Badge, Button, Input, Modal, ModalFooter, Select } from "../../components/ui";
 import { moduleColors } from "../../config/colors.config";
 import toast from "react-hot-toast";
+import { useAuth } from "../../auth/useAuth";
 
 // APIs
 import { getReceptionsApi, cambiarEstadoDetalleApi, Recepcion, DetalleRecepcion } from "../../api/reception.api";
@@ -21,6 +22,9 @@ interface CargaPendiente extends DetalleRecepcion {
 }
 
 export default function MuestreoPage() {
+  const { hasPermission } = useAuth();
+  const hasRowActions = hasPermission("VER_ACCIONES_MUESTREO");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -125,7 +129,7 @@ export default function MuestreoPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead align="center" className="w-36">Acción</TableHead>
+              {hasRowActions && <TableHead align="center" className="w-36">Acción</TableHead>}
               <TableHead>No. Ingreso</TableHead>
               <TableHead>Remisión Física</TableHead>
               <TableHead>Proveedor / Finca</TableHead>
@@ -135,15 +139,17 @@ export default function MuestreoPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} align="center" className="py-8"><Loader2 className="w-6 h-6 animate-spin inline-block text-neutral-400"/> Cargando cola de trabajo...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={hasRowActions ? 6 : 5} align="center" className="py-8"><Loader2 className="w-6 h-6 animate-spin inline-block text-neutral-400"/> Cargando cola de trabajo...</TableCell></TableRow>
             ) : filteredCargas.length === 0 ? (
               <TableEmpty message="Patio limpio. No hay camiones pendientes de muestreo." />
             ) : (
               filteredCargas.map((carga) => (
                 <TableRow key={carga.id_detalle_recepcion}>
-                  <TableCell align="center">
-                    <Button size="sm" onClick={() => handleOpenModal(carga)}>Muestrear</Button>
-                  </TableCell>
+                  {hasRowActions && (
+                    <TableCell align="center">
+                      <Button size="sm" onClick={() => handleOpenModal(carga)}>Muestrear</Button>
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium text-neutral-600">{carga.numero_entrada}</TableCell>
                   <TableCell className="font-bold text-coffee-700">{carga.remision}</TableCell>
                   <TableCell>{carga.proveedor_nombre}</TableCell>

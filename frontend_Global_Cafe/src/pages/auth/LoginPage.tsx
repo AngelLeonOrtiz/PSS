@@ -26,7 +26,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await login({ username, password });
+      await login({ usuario: username, password });
       toast.success("¡Bienvenido!");
       navigate(from, { replace: true });
     } catch (err: any) {

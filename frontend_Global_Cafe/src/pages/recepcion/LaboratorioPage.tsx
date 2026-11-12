@@ -7,6 +7,7 @@ import Badge from "../../components/ui/Badge";
 import { Button, Input, Modal, ModalFooter, Select } from "../../components/ui";
 import { moduleColors } from "../../config/colors.config";
 import toast from "react-hot-toast";
+import { useAuth } from "../../auth/useAuth";
 
 // APIs
 import { getReceptionsApi, DetalleRecepcion } from "../../api/reception.api";
@@ -22,6 +23,9 @@ interface MuestraPendiente extends DetalleRecepcion {
 }
 
 export default function LaboratorioPage() {
+  const { hasPermission } = useAuth();
+  const hasRowActions = hasPermission("CREAR_MUESTRA") || hasPermission("IMPRIMIR_MUESTRA");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -178,7 +182,7 @@ export default function LaboratorioPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead align="center" className="w-32">Acción</TableHead>
+              {hasRowActions && <TableHead align="center" className="w-32">Acción</TableHead>}
               <TableHead>No. Ingreso</TableHead>
               <TableHead>Remisión Física</TableHead>
               <TableHead>Proveedor / Productor</TableHead>
@@ -188,7 +192,7 @@ export default function LaboratorioPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} align="center" className="py-8"><Loader2 className="w-6 h-6 animate-spin inline-block text-neutral-400"/> Cargando bandeja de laboratorio...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={hasRowActions ? 6 : 5} align="center" className="py-8"><Loader2 className="w-6 h-6 animate-spin inline-block text-neutral-400"/> Cargando bandeja de laboratorio...</TableCell></TableRow>
             ) : filteredMuestras.length === 0 ? (
               <TableEmpty message="Laboratorio limpio. No hay muestras en espera de catación." />
             ) : (
@@ -198,34 +202,40 @@ export default function LaboratorioPage() {
                 
                 return (
                 <TableRow key={m.id_detalle_recepcion}>
-                  <TableCell align="center">
-                    <div className="relative inline-block text-left">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === m.id_detalle_recepcion ? null : m.id_detalle_recepcion); }}
-                        className="p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
-                      >
-                        <MoreVertical className="w-5 h-5 text-neutral-600" />
-                      </button>
-                      {actionMenuOpen === m.id_detalle_recepcion && (
-                        <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); if(isMuestreado) { handleOpenModal(m); setActionMenuOpen(null); } }} 
-                            disabled={!isMuestreado}
-                            className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${isMuestreado ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-400 cursor-not-allowed"}`}
-                          >
-                            <Beaker className="w-4 h-4"/> Crear Análisis
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); if(isPendienteAprobacion) handlePrintClick(m); }} 
-                            disabled={!isPendienteAprobacion}
-                            className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${isPendienteAprobacion ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-400 cursor-not-allowed"}`}
-                          >
-                            <Printer className="w-4 h-4"/> Imprimir Boleta
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
+                  {hasRowActions && (
+                    <TableCell align="center">
+                      <div className="relative inline-block text-left">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === m.id_detalle_recepcion ? null : m.id_detalle_recepcion); }}
+                          className="p-1.5 rounded-lg hover:bg-neutral-200 transition-colors"
+                        >
+                          <MoreVertical className="w-5 h-5 text-neutral-600" />
+                        </button>
+                        {actionMenuOpen === m.id_detalle_recepcion && (
+                          <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 py-1" onClick={e => e.stopPropagation()}>
+                            {hasPermission("CREAR_MUESTRA") && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); if(isMuestreado) { handleOpenModal(m); setActionMenuOpen(null); } }} 
+                                disabled={!isMuestreado}
+                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${isMuestreado ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-400 cursor-not-allowed"}`}
+                              >
+                                <Beaker className="w-4 h-4"/> Crear Análisis
+                              </button>
+                            )}
+                            {hasPermission("IMPRIMIR_MUESTRA") && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); if(isPendienteAprobacion) handlePrintClick(m); }} 
+                                disabled={!isPendienteAprobacion}
+                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${isPendienteAprobacion ? "text-neutral-700 hover:bg-neutral-50" : "text-neutral-400 cursor-not-allowed"}`}
+                              >
+                                <Printer className="w-4 h-4"/> Imprimir Boleta
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium text-neutral-600">{m.numero_entrada}</TableCell>
                   <TableCell className="font-bold text-coffee-700">{m.remision}</TableCell>
                   <TableCell>{m.proveedor_nombre}</TableCell>

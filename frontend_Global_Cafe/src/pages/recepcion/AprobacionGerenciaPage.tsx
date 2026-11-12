@@ -7,6 +7,7 @@ import Badge from "../../components/ui/Badge";
 import { Button, Input, Modal, ModalFooter, Select } from "../../components/ui";
 import { moduleColors } from "../../config/colors.config";
 import toast from "react-hot-toast";
+import { useAuth } from "../../auth/useAuth";
 
 // APIs
 import { getAnalisisPendientesApi, veredictoGerenciaApi, VeredictoGerenciaRequest } from "../../api/analisis.api";
@@ -34,6 +35,9 @@ interface MuestraGerencia {
 }
 
 export default function AprobacionGerenciaPage() {
+  const { hasPermission } = useAuth();
+  const hasRowActions = hasPermission("APROBAR_MUESTRA");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -149,22 +153,27 @@ export default function AprobacionGerenciaPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              {hasRowActions && <TableHead align="center">Acción</TableHead>}
               <TableHead>Identificador</TableHead>
               <TableHead>Ingreso / Remisión</TableHead>
               <TableHead>Proveedor</TableHead>
               <TableHead align="center">Calidad Sugerida</TableHead>
               <TableHead align="right">Volumen</TableHead>
-              <TableHead align="center">Acción</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} align="center" className="py-8"><Loader2 className="w-6 h-6 animate-spin inline-block text-neutral-400"/> Consultando pendientes...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={hasRowActions ? 6 : 5} align="center" className="py-8"><Loader2 className="w-6 h-6 animate-spin inline-block text-neutral-400"/> Consultando pendientes...</TableCell></TableRow>
             ) : filteredMuestras.length === 0 ? (
               <TableEmpty message="Bandeja limpia. No hay muestras pendientes de autorización." />
             ) : (
               filteredMuestras.map((m) => (
                 <TableRow key={m.id_analisis_calidad}>
+                  {hasRowActions && (
+                    <TableCell align="center">
+                      <Button size="sm" onClick={() => handleOpenEvaluation(m)} leftIcon={<Eye className="w-4 h-4"/>}>Evaluar</Button>
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-bold text-coffee-700">{m.numero_analisis}</span>
@@ -180,9 +189,6 @@ export default function AprobacionGerenciaPage() {
                   <TableCell>{m.proveedor_nombre}</TableCell>
                   <TableCell align="center"><Badge variant="info">{m.calidad_nombre}</Badge></TableCell>
                   <TableCell align="right" className="font-medium">{m.cantidad_qq.toFixed(2)} QQ</TableCell>
-                  <TableCell align="center">
-                    <Button size="sm" onClick={() => handleOpenEvaluation(m)} leftIcon={<Eye className="w-4 h-4"/>}>Evaluar</Button>
-                  </TableCell>
                 </TableRow>
               ))
             )}

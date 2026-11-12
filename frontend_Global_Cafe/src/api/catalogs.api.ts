@@ -99,6 +99,21 @@ export interface Taza {
   estado: boolean;
 }
 
+export interface Bodega {
+  id_bodega: number;
+  nombre: string;
+  externa: boolean;
+  estado: boolean;
+}
+
+export interface Estiba {
+  id_estibas: number;
+  nombre: string;
+  id_bodega: number;
+  estado: boolean;
+  bodega?: Bodega;
+}
+
 // ==========================================
 // FUNCIONES API
 // ==========================================
@@ -331,4 +346,40 @@ export async function updateTazaApi(id: number, payload: Partial<Taza>): Promise
 
 export async function deleteTazaApi(id: number): Promise<void> {
   await http.delete(`/catalogs/tazas/${id}`);
+}
+
+// ==========================================
+// BODEGAS
+// ==========================================
+export async function getBodegasApi(): Promise<Bodega[]> {
+  const { data } = await http.get<Bodega[]>("/catalogs/bodegas");
+  return data;
+}
+
+export async function createBodegaApi(payload: { nombre: string; externa: boolean }): Promise<Bodega> {
+  const { data } = await http.post<Bodega>("/catalogs/bodegas", payload);
+  return data;
+}
+
+export async function updateBodegaApi(id: number, payload: Partial<Bodega>): Promise<Bodega> {
+  const { data } = await http.patch<Bodega>(`/catalogs/bodegas/${id}`, payload);
+  return data;
+}
+
+// ==========================================
+// ESTIBAS
+// ==========================================
+export async function getEstibasApi(): Promise<Estiba[]> {
+  const { data } = await http.get<Estiba[]>("/catalogs/estibas");
+  return data;
+}
+
+export async function createEstibaApi(payload: { nombre: string; id_bodega: number }): Promise<Estiba> {
+  const { data } = await http.post<Estiba>("/catalogs/estibas", payload);
+  return data;
+}
+
+export async function updateEstibaApi(id: number, payload: Partial<Estiba>): Promise<Estiba> {
+  const { data } = await http.patch<Estiba>(`/catalogs/estibas/${id}`, payload);
+  return data;
 }

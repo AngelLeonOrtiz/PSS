@@ -44,6 +44,7 @@ export type NavItem = {
   to: string;
   icon: LucideIcon;
   description?: string;
+  requirePermission?: string;
 };
 
 export type NavGroup = {
@@ -74,44 +75,51 @@ export const NAV: NavGroup[] = [
         label: "Ingreso de Remisión", 
         to: "/recepcion/remision", 
         icon: ClipboardList,
-        description: "Registro en portería"
+        description: "Registro en portería",
+        requirePermission: "VER_RECEPCION"
       },
       { 
         label: "Muestreo", 
         to: "/recepcion/muestreo", 
         icon: FlaskConical,
-        description: "Muestreo previo/general"
+        description: "Muestreo previo/general",
+        requirePermission: "VER_MUESTREO"
       },
       { 
         label: "Laboratorio", 
         to: "/recepcion/laboratorio", 
         icon: TestTube,
-        description: "Análisis y aprobación"
+        description: "Análisis y aprobación",
+        requirePermission: "VER_MUESTRA"
       },
       {
         label: "Aprobación Gerencia",
         to: "/recepcion/gerencia",
         icon: CheckCircle,
-        description: "Veredicto Gerencia"
+        description: "Veredicto Gerencia",
+        requirePermission: "VER_APROBACIONES"
       },
 
       { 
         label: "Báscula de Entrada", 
         to: "/recepcion/bascula-entrada", 
         icon: Scale,
-        description: "Pesaje inicial"
+        description: "Pesaje inicial",
+        requirePermission: "VER_BASCULA"
       },
       { 
         label: "WMS Patio", 
         to: "/recepcion/wms-patio", 
         icon: Warehouse,
-        description: "Almacenamiento pergamino"
+        description: "Almacenamiento pergamino",
+        //requirePermission: "VER_WMS_PATIO"
       },
       { 
         label: "Nota de Peso", 
         to: "/recepcion/nota-peso", 
         icon: FileText,
-        description: "Liquidación"
+        description: "Liquidación",
+        requirePermission: "VER_NOTA_PESO"
       },
     ],
   },
@@ -124,43 +132,50 @@ export const NAV: NavGroup[] = [
         label: "Contrato de Venta", 
         to: "/comercial/contratos", 
         icon: FileSignature,
-        description: "Registro de contratos"
+        description: "Registro de contratos",
+        requirePermission: "VER_CONTRATOS"
       },
       { 
         label: "Muestra Pre-Embarque", 
         to: "/comercial/muestra-preembarque", 
         icon: PackageSearch,
-        description: "Solicitud de muestra"
+        description: "Solicitud de muestra",
+        requirePermission: "VER_MUESTRA_PREEMBARQUE"
       },
       { 
         label: "Lab Pre-Embarque", 
         to: "/comercial/lab-preembarque", 
         icon: TestTube,
-        description: "Análisis pre-embarque"
+        description: "Análisis pre-embarque",
+        requirePermission: "VER_LAB_PREEMBARQUE"
       },
       { 
         label: "Aprobación Cliente", 
         to: "/comercial/aprobacion", 
         icon: CheckCircle,
-        description: "Gestión de aprobaciones"
+        description: "Gestión de aprobaciones",
+        requirePermission: "VER_APROBACIONES_CLIENTE"
       },
       { 
         label: "Generación de Lotes", 
         to: "/comercial/lotes", 
         icon: Boxes,
-        description: "Consecutivo global"
+        description: "Consecutivo global",
+        requirePermission: "VER_LOTES"
       },
       { 
         label: "Instrucciones Embarque", 
         to: "/comercial/instrucciones-embarque", 
         icon: Ship,
-        description: "Shipping Instructions (SI)"
+        description: "Shipping Instructions (SI)",
+        requirePermission: "VER_SI"
       },
       { 
         label: "Inventario Pergamino", 
         to: "/comercial/inventario-pergamino", 
         icon: Database,
-        description: "Inventario pergamino seco"
+        description: "Inventario pergamino seco",
+        requirePermission: "VER_INVENTARIO"
       },
     ],
   },
@@ -173,37 +188,43 @@ export const NAV: NavGroup[] = [
         label: "Programa Producción", 
         to: "/industrial/programa", 
         icon: Calendar,
-        description: "Programa semanal"
+        description: "Programa semanal",
+        requirePermission: "VER_PROGRAMA"
       },
       { 
         label: "Orden de Sacos", 
         to: "/industrial/orden-sacos", 
         icon: Package,
-        description: "Cálculo inverso insumo"
+        description: "Cálculo inverso insumo",
+        requirePermission: "VER_ORDEN_SACOS"
       },
       { 
         label: "Proceso de Trilla", 
         to: "/industrial/trilla", 
         icon: Factory,
-        description: "Operación maquinaria"
+        description: "Operación maquinaria",
+        requirePermission: "VER_TRILLA"
       },
       { 
         label: "Balance de Masas", 
         to: "/industrial/balance-masas", 
         icon: Calculator,
-        description: "Registro de resultados"
+        description: "Registro de resultados",
+        requirePermission: "VER_BALANCE_MASAS"
       },
       { 
         label: "Producto Terminado", 
         to: "/industrial/producto-terminado", 
         icon: PackageCheck,
-        description: "Oro exportable"
+        description: "Oro exportable",
+        requirePermission: "VER_PRODUCTO_TERMINADO"
       },
       { 
         label: "Merma / Remanente", 
         to: "/industrial/merma", 
         icon: Recycle,
-        description: "Reasignación"
+        description: "Reasignación",
+        requirePermission: "VER_REMANENTE"
       },
     ],
   },
@@ -216,31 +237,36 @@ export const NAV: NavGroup[] = [
         label: "Asignación Contenedores", 
         to: "/despacho/contenedores", 
         icon: Container,
-        description: "Asignación naviera"
+        description: "Asignación naviera",
+        requirePermission: "VER_CONTENEDORES"
       },
       { 
         label: "Orden de Carga", 
         to: "/despacho/orden-carga", 
         icon: ClipboardCheck,
-        description: "Match lote-contenedor"
+        description: "Match lote-contenedor",
+        requirePermission: "VER_ORDEN_CARGA"
       },
       { 
         label: "Carga de Contenedor", 
         to: "/despacho/carga", 
         icon: Truck,
-        description: "Proceso de carga"
+        description: "Proceso de carga",
+        requirePermission: "VER_CARGA"
       },
       { 
         label: "Báscula de Salida", 
         to: "/despacho/bascula-salida", 
         icon: Weight,
-        description: "Validación peso idóneo"
+        description: "Validación peso idóneo",
+        requirePermission: "VER_BASCULA_SALIDA"
       },
       { 
         label: "Documentación Final", 
         to: "/despacho/documentacion", 
         icon: FileStack,
-        description: "BL, Packing List"
+        description: "BL, Packing List",
+        requirePermission: "VER_DOCUMENTOS"
       },
     ],
   },
@@ -253,25 +279,29 @@ export const NAV: NavGroup[] = [
         label: "Kardex Subproductos", 
         to: "/ventas/kardex", 
         icon: BarChart3,
-        description: "Control por cosecha"
+        description: "Control por cosecha",
+        requirePermission: "VER_KARDEX"
       },
       { 
         label: "Orden Venta Local", 
         to: "/ventas/orden-venta", 
         icon: ShoppingCart,
-        description: "Autorización de venta"
+        description: "Autorización de venta",
+        requirePermission: "VER_ORDEN_VENTA"
       },
       { 
         label: "Báscula Venta Local", 
         to: "/ventas/bascula", 
         icon: Scale,
-        description: "Validación de peso"
+        description: "Validación de peso",
+        requirePermission: "VER_BASCULA_VENTA"
       },
       { 
         label: "Salida Venta Local", 
         to: "/ventas/salida", 
         icon: Receipt,
-        description: "Registro de salida"
+        description: "Registro de salida",
+        requirePermission: "VER_SALIDA"
       },
     ],
   },
@@ -282,25 +312,29 @@ export const NAV: NavGroup[] = [
         label: "Usuarios", 
         to: "/admin/usuarios", 
         icon: Users,
-        description: "Gestión de usuarios"
+        description: "Gestión de usuarios",
+        requirePermission: "VER_USUARIOS"
       },
       { 
         label: "Roles y Permisos", 
         to: "/admin/roles", 
         icon: Shield,
-        description: "Control de acceso"
+        description: "Control de acceso",
+        requirePermission: "VER_ROLES"
       },
       { 
         label: "Configuración", 
         to: "/admin/configuracion", 
         icon: Settings,
-        description: "Parámetros del sistema"
+        description: "Parámetros del sistema",
+        requirePermission: "VER_CONFIGURACION"
       },
       { 
         label: "Catálogos", 
         to: "/admin/catalogos", 
         icon: Database,
-        description: "Mantenimiento general"
+        description: "Mantenimiento general",
+        requirePermission: "VER_CATALOGOS"
       },
     ],
   },

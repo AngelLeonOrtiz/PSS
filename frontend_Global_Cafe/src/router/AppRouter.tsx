@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import AppLayout from "../components/layout/AppLayout";
@@ -55,6 +56,16 @@ import RolesPage from "../pages/admin/RolesPage";
 import ConfiguracionPage from "../pages/admin/ConfiguracionPage";
 import MantenimientoCatalogos from "../pages/admin/MantenimientoCatalogos";
 
+// Componente para proteger rutas según los permisos del usuario
+const RequirePermission = ({ children, permission }: { children: ReactNode, permission: string }) => {
+  const { hasPermission, isAuthenticated } = useAuth(); 
+  
+  if (isAuthenticated && !hasPermission(permission)) {
+    return <Navigate to="/" replace />; // Lo mandamos al Dashboard si no tiene permiso
+  }
+  return children;
+};
+
 export default function AppRouter() {
   const { isAuthenticated } = useAuth();
 
@@ -78,13 +89,13 @@ export default function AppRouter() {
         <Route path="/" element={<DashboardPage />} />
 
         {/* Módulo 1: Recepción */}
-        <Route path="/recepcion/remision" element={<RemisionPage />} />
-        <Route path="/recepcion/muestreo" element={<MuestreoPage />} />
-        <Route path="/recepcion/laboratorio" element={<LaboratorioPage />} />
-        <Route path="/recepcion/bascula-entrada" element={<BasculaEntradaPage />} />
-        <Route path="/recepcion/wms-patio" element={<WMSPatioPage />} />
-        <Route path="/recepcion/nota-peso" element={<NotaPesoPage />} />
-        <Route path="/recepcion/gerencia" element={<AprobacionGerenciaPage />} />
+        <Route path="/recepcion/remision" element={<RequirePermission permission="VER_RECEPCION"><RemisionPage /></RequirePermission>} />
+        <Route path="/recepcion/muestreo" element={<RequirePermission permission="VER_MUESTREO"><MuestreoPage /></RequirePermission>} />
+        <Route path="/recepcion/laboratorio" element={<RequirePermission permission="VER_MUESTRA"><LaboratorioPage /></RequirePermission>} />
+        <Route path="/recepcion/bascula-entrada" element={<RequirePermission permission="VER_BASCULA"><BasculaEntradaPage /></RequirePermission>} />
+        <Route path="/recepcion/wms-patio" element={<RequirePermission permission="VER_WMS_PATIO"><WMSPatioPage /></RequirePermission>} />
+        <Route path="/recepcion/nota-peso" element={<RequirePermission permission="VER_NOTA_PESO"><NotaPesoPage /></RequirePermission>} />
+        <Route path="/recepcion/gerencia" element={<RequirePermission permission="VER_APROBACIONES"><AprobacionGerenciaPage /></RequirePermission>} />
 
         {/* Módulo 2: Comercial */}
         <Route path="/comercial/contratos" element={<ContratosPage />} />
@@ -117,10 +128,10 @@ export default function AppRouter() {
         <Route path="/ventas/salida" element={<SalidaVentaPage />} />
 
         {/* Administración */}
-        <Route path="/admin/usuarios" element={<UsuariosPage />} />
-        <Route path="/admin/roles" element={<RolesPage />} />
-        <Route path="/admin/configuracion" element={<ConfiguracionPage />} />
-        <Route path="/admin/catalogos" element={<MantenimientoCatalogos />} />
+        <Route path="/admin/usuarios" element={<RequirePermission permission="VER_USUARIOS"><UsuariosPage /></RequirePermission>} />
+        <Route path="/admin/roles" element={<RequirePermission permission="VER_ROLES"><RolesPage /></RequirePermission>} />
+        <Route path="/admin/configuracion" element={<RequirePermission permission="VER_CONFIGURACION"><ConfiguracionPage /></RequirePermission>} />
+        <Route path="/admin/catalogos" element={<RequirePermission permission="VER_CATALOGOS"><MantenimientoCatalogos /></RequirePermission>} />
       </Route>
 
       {/* Ruta por defecto - redirigir al dashboard o login */}

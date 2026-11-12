@@ -24,11 +24,13 @@ import {
   getDefectosApi, createDefectoApi, updateDefectoApi,
   getZarandasApi, createZarandaApi, updateZarandaApi,
   getTazasApi, createTazaApi, updateTazaApi,
+  getBodegasApi, createBodegaApi, updateBodegaApi,
+  getEstibasApi, createEstibaApi, updateEstibaApi,
   Cosecha, Proveedor, Conductor, PlacaCabezal, PlacaFurgon, Municipio, Transporte, Departamento,
-  Catador, Calidad, Defecto, Zaranda, Taza
+  Catador, Calidad, Defecto, Zaranda, Taza, Bodega, Estiba
 } from "../../api/catalogs.api";
 
-type TabType = "proveedores" | "transportes" | "conductores" | "placas-cabezal" | "placas-furgon" | "cosechas" | "departamentos" | "municipios" | "catadores" | "calidades" | "defectos" | "zarandas" | "tazas";
+type TabType = "proveedores" | "transportes" | "conductores" | "placas-cabezal" | "placas-furgon" | "cosechas" | "departamentos" | "municipios" | "catadores" | "calidades" | "defectos" | "zarandas" | "tazas" | "bodegas" | "estibas";
 
 export default function MantenimientoCatalogos() {
   const [activeTab, setActiveTab] = useState<TabType>("proveedores");
@@ -49,6 +51,8 @@ export default function MantenimientoCatalogos() {
   const [defectos, setDefectos] = useState<Defecto[]>([]);
   const [zarandas, setZarandas] = useState<Zaranda[]>([]);
   const [tazas, setTazas] = useState<Taza[]>([]);
+  const [bodegas, setBodegas] = useState<Bodega[]>([]);
+  const [estibas, setEstibas] = useState<Estiba[]>([]);
 
   // Estados para el Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,7 +67,7 @@ export default function MantenimientoCatalogos() {
     try {
       setLoading(true);
       // Cargamos todos los catálogos en paralelo para mayor velocidad
-      const [provs, conds, pCabezal, pFurgon, cos, muns, trans, deptos, cat, cal, def, zar, taz] = await Promise.all([
+      const [provs, conds, pCabezal, pFurgon, cos, muns, trans, deptos, cat, cal, def, zar, taz, bods, ests] = await Promise.all([
         getProveedoresApi(),
         getConductoresApi(),
         getPlacasCabezalApi(),
@@ -76,7 +80,9 @@ export default function MantenimientoCatalogos() {
         getCalidadesApi(),
         getDefectosApi(),
         getZarandasApi(),
-        getTazasApi()
+        getTazasApi(),
+        getBodegasApi(),
+        getEstibasApi()
       ]);
 
       setProveedores(provs);
@@ -92,6 +98,8 @@ export default function MantenimientoCatalogos() {
       setDefectos(def);
       setZarandas(zar);
       setTazas(taz);
+      setBodegas(bods);
+      setEstibas(ests);
     } catch (error) {
       console.error("Error cargando catálogos:", error);
       toast.error("Error al cargar los catálogos del servidor");
@@ -114,6 +122,8 @@ export default function MantenimientoCatalogos() {
     { id: "defectos", label: "Defectos" },
     { id: "zarandas", label: "Mallas / Zarandas" },
     { id: "tazas", label: "Atributos de Taza" },
+    { id: "bodegas", label: "Bodegas" },
+    { id: "estibas", label: "Estibas" },
   ];
 
   // Todas las pestañas permiten crear y editar ahora
@@ -197,6 +207,16 @@ export default function MantenimientoCatalogos() {
       else if (activeTab === "tazas") {
         if (editingId) await updateTazaApi(editingId, { nombre: formData.nombre, estado: formData.estado });
         else await createTazaApi({ nombre: formData.nombre });
+      }
+      else if (activeTab === "bodegas") {
+        const payload = { nombre: formData.nombre, externa: formData.externa || false };
+        if (editingId) await updateBodegaApi(editingId, { ...payload, estado: formData.estado });
+        else await createBodegaApi(payload);
+      }
+      else if (activeTab === "estibas") {
+        const payload = { nombre: formData.nombre, id_bodega: Number(formData.id_bodega) };
+        if (editingId) await updateEstibaApi(editingId, { ...payload, estado: formData.estado });
+        else await createEstibaApi(payload);
       }
 
       toast.success("Registro guardado exitosamente");
@@ -388,6 +408,48 @@ export default function MantenimientoCatalogos() {
         return zarandas.filter(z => z.nombre.toLowerCase().includes(term)).map((z) => <TableRow key={z.id_zaranda}><TableCell className="font-medium">{z.nombre}</TableCell><TableCell align="center"><Badge variant={z.estado ? "success" : "danger"} size="sm">{z.estado ? "Activo" : "Inactivo"}</Badge></TableCell>{canEditTab && <TableCell align="center"><button onClick={() => handleEdit(z, "id_zaranda")} className="p-1.5 rounded-lg hover:bg-neutral-100" title="Editar"><Edit className="w-4 h-4 text-neutral-600" /></button></TableCell>}</TableRow>);
       case "tazas":
         return tazas.filter(t => t.nombre.toLowerCase().includes(term)).map((t) => <TableRow key={t.id_tazas}><TableCell className="font-medium">{t.nombre}</TableCell><TableCell align="center"><Badge variant={t.estado ? "success" : "danger"} size="sm">{t.estado ? "Activo" : "Inactivo"}</Badge></TableCell>{canEditTab && <TableCell align="center"><button onClick={() => handleEdit(t, "id_tazas")} className="p-1.5 rounded-lg hover:bg-neutral-100" title="Editar"><Edit className="w-4 h-4 text-neutral-600" /></button></TableCell>}</TableRow>);
+      case "bodegas":
+        return bodegas.filter(b => b.nombre.toLowerCase().includes(term)).map((b) => (
+          <TableRow key={b.id_bodega}>
+            <TableCell className="font-medium">{b.nombre}</TableCell>
+            <TableCell align="center">
+              <Badge variant={b.externa ? "warning" : "info"} size="sm">
+                {b.externa ? "Externa" : "Interna"}
+              </Badge>
+            </TableCell>
+            <TableCell align="center">
+              <Badge variant={b.estado ? "success" : "danger"} size="sm">
+                {b.estado ? "Activo" : "Inactivo"}
+              </Badge>
+            </TableCell>
+            {canEditTab && (
+              <TableCell align="center">
+                <button onClick={() => handleEdit(b, "id_bodega")} className="p-1.5 rounded-lg hover:bg-neutral-100" title="Editar">
+                  <Edit className="w-4 h-4 text-neutral-600" />
+                </button>
+              </TableCell>
+            )}
+          </TableRow>
+        ));
+      case "estibas":
+        return estibas.filter(e => e.nombre.toLowerCase().includes(term) || e.bodega?.nombre.toLowerCase().includes(term)).map((e) => (
+          <TableRow key={e.id_estibas}>
+            <TableCell className="font-medium">{e.nombre}</TableCell>
+            <TableCell>{e.bodega?.nombre || "N/A"}</TableCell>
+            <TableCell align="center">
+              <Badge variant={e.estado ? "success" : "danger"} size="sm">
+                {e.estado ? "Activo" : "Inactivo"}
+              </Badge>
+            </TableCell>
+            {canEditTab && (
+              <TableCell align="center">
+                <button onClick={() => handleEdit(e, "id_estibas")} className="p-1.5 rounded-lg hover:bg-neutral-100" title="Editar">
+                  <Edit className="w-4 h-4 text-neutral-600" />
+                </button>
+              </TableCell>
+            )}
+          </TableRow>
+        ));
     }
   };
 
@@ -481,7 +543,22 @@ export default function MantenimientoCatalogos() {
         <div className="space-y-4">
           <Input label="Atributo de Taza" placeholder="Ej: Acidez, Cuerpo..." value={formData.nombre || ""} onChange={(e) => setFormData({...formData, nombre: e.target.value})} required />
         </div>
-      )
+      ),
+      "bodegas": (
+        <div className="space-y-4">
+          <Input label="Nombre de la Bodega" placeholder="Ej: Bodega Principal" value={formData.nombre || ""} onChange={(e) => setFormData({...formData, nombre: e.target.value})} required />
+          <label className="flex items-center gap-2 mt-4 cursor-pointer">
+            <input type="checkbox" checked={formData.externa ?? false} onChange={(e) => setFormData({...formData, externa: e.target.checked})} className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4" />
+            <span className="text-sm font-medium text-neutral-700">Es Bodega Externa (Alquilada/Fuera del beneficio)</span>
+          </label>
+        </div>
+      ),
+      "estibas": (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input label="Nombre de la Estiba / Lote Físico" placeholder="Ej: Estiba A-1" value={formData.nombre || ""} onChange={(e) => setFormData({...formData, nombre: e.target.value})} required />
+          <Select label="Bodega a la que pertenece" value={formData.id_bodega || ""} onChange={(e) => setFormData({...formData, id_bodega: e.target.value})} options={[{ value: "", label: "Seleccione una bodega" }, ...bodegas.map(b => ({ value: b.id_bodega.toString(), label: b.nombre }))]} required />
+        </div>
+      ),
     };
 
     return (
@@ -542,6 +619,8 @@ export default function MantenimientoCatalogos() {
               {["proveedores", "conductores", "transportes"].includes(activeTab) && <TableHead>Teléfono</TableHead>}
               {activeTab === "municipios" && <TableHead>Departamento</TableHead>}
               {activeTab === "cosechas" && <TableHead align="center">Status</TableHead>}
+              {activeTab === "bodegas" && <TableHead align="center">Tipo</TableHead>}
+              {activeTab === "estibas" && <TableHead>Bodega</TableHead>}
               <TableHead align="center">Estado</TableHead>
               {canEditTab && <TableHead align="center">Acciones</TableHead>}
             </TableRow>

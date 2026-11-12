@@ -8,7 +8,7 @@ const linkActive = "bg-white/15 text-white";
 const linkIdle = "text-white/70 hover:bg-white/5 hover:text-white";
 
 export default function Sidebar() {
-  const { profile } = useAuth();
+  const { profile, hasPermission } = useAuth();
   const { sidebarMode, setSidebarMode } = useLayout();
 
   const isCollapsed = sidebarMode === "collapsed";
@@ -41,8 +41,16 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <div className="flex-1 overflow-auto px-2 py-4">
-        {NAV.map((group) => (
-          <div key={group.title} className="mb-5">
+        {NAV.map((group) => {
+          // Filtramos los ítems a los que el usuario tiene acceso
+          const allowedItems = group.items.filter((item) => 
+            !item.requirePermission || hasPermission(item.requirePermission)
+          );
+
+          if (allowedItems.length === 0) return null;
+
+          return (
+            <div key={group.title} className="mb-5">
             {/* Group Title con indicador de color */}
             {!isCollapsed && (
               <div className="flex items-center gap-2 px-2 mb-2">
@@ -68,7 +76,7 @@ export default function Sidebar() {
 
             {/* Navigation Items */}
             <div className="space-y-1">
-              {group.items.map((item) => {
+              {allowedItems.map((item) => {
                 const Icon = item.icon;
 
                 return (
@@ -90,8 +98,9 @@ export default function Sidebar() {
                 );
               })}
             </div>
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Footer - User Info */}

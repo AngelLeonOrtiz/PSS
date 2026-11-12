@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { 
   TrendingUp, 
   Package, 
@@ -8,33 +9,66 @@ import {
   CheckCircle,
   Clock,
   ArrowRight,
+  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { moduleColors } from "../../config/colors.config";
-
-const stats = [
-  { title: "Remisiones Hoy", value: "24", change: "+12%", changeType: "positive" as const, icon: Package, module: "recepcion" },
-  { title: "En Proceso Trilla", value: "8", change: "3 lotes", changeType: "neutral" as const, icon: Factory, module: "industrial" },
-  { title: "Contenedores Pendientes", value: "5", change: "2 hoy", changeType: "neutral" as const, icon: Truck, module: "despacho" },
-  { title: "Ventas Locales Mes", value: "156", change: "+8%", changeType: "positive" as const, icon: ShoppingCart, module: "ventas" },
-];
-
-const pendingTasks = [
-  { id: 1, task: "Aprobar muestra lote L-2024-0892", module: "comercial", status: "urgente" },
-  { id: 2, task: "Validar peso contenedor CONT-4521", module: "despacho", status: "pendiente" },
-  { id: 3, task: "Análisis laboratorio remisión R-1234", module: "recepcion", status: "pendiente" },
-  { id: 4, task: "Balance de masas orden O-789", module: "industrial", status: "en_proceso" },
-];
-
-const recentActivity = [
-  { id: 1, action: "Remisión R-1235 ingresada", time: "Hace 5 min", module: "recepcion" },
-  { id: 2, action: "Lote L-2024-0893 generado", time: "Hace 15 min", module: "comercial" },
-  { id: 3, action: "Contenedor CONT-4520 despachado", time: "Hace 1 hora", module: "despacho" },
-  { id: 4, action: "Trilla completada orden O-788", time: "Hace 2 horas", module: "industrial" },
-];
+import { getResumenHoyApi } from "../../api/reception.api";
+import toast from "react-hot-toast";
 
 export default function DashboardPage() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const res = await getResumenHoyApi();
+        setData(res);
+      } catch (error) {
+        console.error(error);
+        toast.error("Error al cargar los datos del dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-coffee-600 mb-4" />
+        <span className="text-lg font-medium text-neutral-600">Cargando métricas operativas...</span>
+      </div>
+    );
+  }
+
+  const stats = [
+    { title: "Ingresos Hoy", value: data?.stats?.ingresosHoy || 0, change: "Vehículos", changeType: "neutral" as const, icon: Truck, module: "recepcion" },
+    { title: "Sacos Declarados", value: data?.stats?.sacosHoy || 0, change: "Hoy", changeType: "neutral" as const, icon: Package, module: "recepcion" },
+    { title: "Volumen Estimado", value: `${data?.stats?.qqHoy ? Number(data.stats.qqHoy).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00"} QQ`, change: "Hoy", changeType: "neutral" as const, icon: TrendingUp, module: "recepcion" },
+    { title: "Vehículos en Patio", value: data?.stats?.enProceso || 0, change: "En proceso", changeType: "positive" as const, icon: Clock, module: "recepcion" },
+  ];
+
+  // Filtramos para mostrar solo las tareas que tienen algo pendiente (cantidad > 0)
+  const pendingTasks = [
+    { id: 1, task: `${data?.pendientes?.muestreo || 0} vehículos esperando toma de muestra`, module: "recepcion", status: "pendiente", link: "/recepcion/remision" },
+    { id: 2, task: `${data?.pendientes?.laboratorio || 0} muestras en laboratorio por analizar`, module: "recepcion", status: "en_proceso", link: "/recepcion/laboratorio" },
+    { id: 3, task: `${data?.pendientes?.gerencia || 0} análisis esperando veredicto de gerencia`, module: "recepcion", status: "urgente", link: "/recepcion/gerencia" },
+    { id: 4, task: `${data?.pendientes?.bascula || 0} equipo esperando pesaje en báscula`, module: "recepcion", status: "pendiente", link: "/recepcion/bascula-entrada" },
+  ].filter(t => parseInt(t.task.split(' ')[0]) > 0);
+
+  const recentActivity: { id: number; action: string; time: string; module: string; detail: string }[] = data?.actividad?.map((act: any) => ({
+    id: act.id,
+    action: `Ingreso ${act.numero_entrada} registrado`,
+    time: new Date(act.fecha).toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+    module: "recepcion",
+    detail: `${act.transporte} • ${act.sacos || 0} Sacos • ${Number(act.qq || 0).toFixed(2)} QQ`
+  })) || [];
+
   return (
     <div className="space-y-6">
       <div>
@@ -75,35 +109,42 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {pendingTasks.map((task) => {
-                const colors = moduleColors[task.module as keyof typeof moduleColors];
-                return (
-                  <div key={task.id} className="flex items-center gap-4 p-3 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colors.border }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 truncate">{task.task}</p>
-                    </div>
-                    {task.status === "urgente" && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                        <AlertCircle className="w-3 h-3" /> Urgente
-                      </span>
-                    )}
-                    {task.status === "en_proceso" && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                        <Clock className="w-3 h-3" /> En proceso
-                      </span>
-                    )}
-                    {task.status === "pendiente" && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-                        <Clock className="w-3 h-3" /> Pendiente
-                      </span>
-                    )}
-                    <ArrowRight className="w-4 h-4 text-neutral-400" />
+        {pendingTasks.length === 0 ? (
+          <div className="py-8 text-center text-neutral-500">
+            <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-500 opacity-50" />
+            <p>No hay tareas pendientes en Recepción</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pendingTasks.map((task) => {
+              const colors = moduleColors[task.module as keyof typeof moduleColors];
+              return (
+                <Link to={task.link} key={task.id} className="flex items-center gap-4 p-3 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors cursor-pointer">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: colors.border }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-neutral-900 truncate">{task.task}</p>
                   </div>
-                );
-              })}
-            </div>
+                  {task.status === "urgente" && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                      <AlertCircle className="w-3 h-3" /> Urgente
+                    </span>
+                  )}
+                  {task.status === "en_proceso" && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                      <Clock className="w-3 h-3" /> En proceso
+                    </span>
+                  )}
+                  {task.status === "pendiente" && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                      <Clock className="w-3 h-3" /> Pendiente
+                    </span>
+                  )}
+                  <ArrowRight className="w-4 h-4 text-neutral-400" />
+                </Link>
+              );
+            })}
+          </div>
+        )}
           </CardContent>
         </Card>
 
@@ -112,22 +153,28 @@ export default function DashboardPage() {
             <CardTitle>Actividad Reciente</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => {
-                const colors = moduleColors[activity.module as keyof typeof moduleColors];
-                return (
-                  <div key={activity.id} className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: colors.bg }}>
-                      <CheckCircle className="w-4 h-4" style={{ color: colors.icon }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900">{activity.action}</p>
-                      <p className="text-xs text-neutral-500">{activity.time}</p>
-                    </div>
+        {recentActivity.length === 0 ? (
+          <div className="py-8 text-center text-neutral-500">
+            <p>No hay actividad reciente hoy.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {recentActivity.map((activity) => {
+              const colors = moduleColors[activity.module as keyof typeof moduleColors];
+              return (
+                <div key={activity.id} className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: colors.bg }}>
+                    <CheckCircle className="w-4 h-4" style={{ color: colors.icon }} />
                   </div>
-                );
-              })}
-            </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-neutral-900">{activity.action}</p>
+                    <p className="text-xs text-neutral-500">{activity.detail} • {activity.time}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
           </CardContent>
         </Card>
       </div>

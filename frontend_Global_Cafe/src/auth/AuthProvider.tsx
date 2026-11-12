@@ -47,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const hasPermission = (permiso: string): boolean => {
+
     // Si tienes permisos "*" entonces permite todo
     if (profile?.permisos?.includes("*")) return true;
     return profile?.permisos?.includes(permiso) ?? false;
